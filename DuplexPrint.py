@@ -3,6 +3,7 @@ import argparse
 from PyPDF2 import PdfReader
 import os
 import subprocess
+import time
 #############################################################
 parser = argparse.ArgumentParser(description='Print PDF pages in Duplex mode using a single function printer')
 parser.add_argument('filename')# positional argument
@@ -30,11 +31,21 @@ def printFile(filename):
 		print("Printing page "+str(i)+"/"+str(pageCount))
 		CMD="lpr -o page-ranges="+str(i)+" "+filename
 		#os.system(CMD)
-		#p = subprocess.Popen(CMD.split())
-		#p.wait()
+		p = subprocess.Popen(CMD.split())
+		p.wait()
 		#print(CMD)
 	############################################
-	inp = input('Please wait till the printer stops\n and then place the pages in tray.\n Now enter to continue ...')
+	isPrintPending=True
+	while (isPrintPending):
+		CMD="lpstat"
+		p = subprocess.run(CMD.split(), capture_output=True, text=True)
+		isPrintPending=True if(len(p.stdout)>0) else False
+		if(isPrintPending):
+			print("There are still some pending jobs as follows:\n")
+			print(p.stdout)
+			time.sleep(10)
+			print("Don't worry. I'll wait for 10s and retry")
+	inp = input('ODD page printing complete.\n Now place the printed pages in feeder tray and PRESS any key to continue ...')
 	############################################
 	evenPages=evenRangeRev(pageCount) 
 	for i in evenPages:
